@@ -1,0 +1,46 @@
+\begin{tabular}{lllrrrrrrrrr}
+ &  & feature & \multicolumn{3}{r}{x_1} & \multicolumn{3}{r}{x_3} & \multicolumn{3}{r}{x_5} \\
+ &  & metric & MSE & Bias & Variance & MSE & Bias & Variance & MSE & Bias & Variance \\
+\multirow[c]{21}{*}{1000} & \multirow[c]{3}{*}{LinReg} & train & nan & nan & nan & nan & nan & nan & nan & nan & nan \\
+ &  & val & nan & nan & nan & nan & nan & nan & nan & nan & nan \\
+ &  & cv & nan & nan & nan & nan & nan & nan & nan & nan & nan \\
+ & \multirow[c]{3}{*}{GAM_OF} & train & 0.1962 & 0.0835 & 0.1958 & 0.2033 & 0.0757 & 0.2044 & 0.2043 & 0.0921 & 0.2025 \\
+ &  & val & 0.2058 & 0.0872 & 0.2051 & 0.2038 & 0.0736 & 0.2053 & 0.2085 & 0.0917 & 0.2070 \\
+ &  & cv & \bfseries 0.1049 & \bfseries 0.0699 & \bfseries 0.1034 & \bfseries 0.1093 & \bfseries 0.0604 & \bfseries 0.1093 & \bfseries 0.1055 & \bfseries 0.0594 & \bfseries 0.1055 \\
+ & \multirow[c]{3}{*}{GAM_OT} & train & 0.0202 & \bfseries 0.0151 & 0.0206 & 0.0188 & 0.0261 & 0.0187 & 0.0207 & 0.0204 & 0.0210 \\
+ &  & val & 0.0253 & 0.0225 & 0.0256 & 0.0188 & 0.0262 & 0.0188 & 0.0207 & 0.0210 & 0.0209 \\
+ &  & cv & \bfseries 0.0168 & 0.0196 & \bfseries 0.0170 & \bfseries 0.0148 & \bfseries 0.0237 & \bfseries 0.0147 & \bfseries 0.0148 & \bfseries 0.0169 & \bfseries 0.0150 \\
+ & \multirow[c]{3}{*}{SVM_OF} & train & \bfseries 0.8744 & \bfseries 0.9306 & 0.0087 & \bfseries 0.7071 & \bfseries 0.8370 & 0.0068 & \bfseries 0.3591 & \bfseries 0.5928 & 0.0079 \\
+ &  & val & 1.3532 & 1.1600 & 0.0078 & 0.9780 & 0.9853 & 0.0074 & 0.6101 & 0.7777 & 0.0054 \\
+ &  & cv & 1.3742 & 1.1707 & \bfseries 0.0037 & 0.9555 & 0.9758 & \bfseries 0.0035 & 0.6011 & 0.7734 & \bfseries 0.0031 \\
+ & \multirow[c]{3}{*}{SVM_OT} & train & 0.0067 & 0.0339 & 0.0058 & 0.0043 & 0.0235 & 0.0039 & 0.0045 & 0.0156 & 0.0044 \\
+ &  & val & 0.0097 & \bfseries 0.0281 & 0.0092 & 0.0042 & \bfseries 0.0235 & 0.0038 & 0.0048 & 0.0174 & 0.0046 \\
+ &  & cv & \bfseries 0.0054 & 0.0306 & \bfseries 0.0046 & \bfseries 0.0029 & 0.0240 & \bfseries 0.0024 & \bfseries 0.0029 & \bfseries 0.0133 & \bfseries 0.0029 \\
+ & \multirow[c]{3}{*}{XGBoost_OF} & train & 0.1725 & 0.2581 & 0.1095 & \bfseries 0.5330 & \bfseries 0.6991 & 0.0458 & 0.1204 & 0.2838 & 0.0412 \\
+ &  & val & 0.1915 & 0.2628 & 0.1266 & 0.5650 & 0.7159 & 0.0543 & 0.1243 & \bfseries 0.2725 & 0.0518 \\
+ &  & cv & \bfseries 0.1084 & \bfseries 0.2567 & \bfseries 0.0440 & 0.5620 & 0.7395 & \bfseries 0.0158 & \bfseries 0.1021 & 0.2814 & \bfseries 0.0237 \\
+ & \multirow[c]{3}{*}{XGBoost_OT} & train & 0.0399 & 0.1175 & 0.0269 & 0.0494 & \bfseries 0.1634 & 0.0235 & 0.0294 & 0.1018 & 0.0197 \\
+ &  & val & 0.0411 & \bfseries 0.1111 & 0.0297 & 0.0514 & 0.1677 & 0.0241 & 0.0299 & \bfseries 0.1006 & 0.0204 \\
+ &  & cv & \bfseries 0.0323 & 0.1138 & \bfseries 0.0201 & \bfseries 0.0426 & 0.1650 & \bfseries 0.0159 & \bfseries 0.0233 & 0.1008 & \bfseries 0.0136 \\
+\multirow[c]{21}{*}{8000} & \multirow[c]{3}{*}{LinReg} & train & nan & nan & nan & nan & nan & nan & nan & nan & nan \\
+ &  & val & nan & nan & nan & nan & nan & nan & nan & nan & nan \\
+ &  & cv & nan & nan & nan & nan & nan & nan & nan & nan & nan \\
+ & \multirow[c]{3}{*}{GAM_OF} & train & 0.0126 & 0.0214 & 0.0126 & 0.0113 & 0.0196 & 0.0112 & 0.0127 & 0.0234 & 0.0126 \\
+ &  & val & 0.0131 & 0.0210 & 0.0131 & 0.0113 & 0.0197 & 0.0113 & 0.0128 & 0.0234 & 0.0127 \\
+ &  & cv & \bfseries 0.0095 & \bfseries 0.0178 & \bfseries 0.0095 & \bfseries 0.0086 & \bfseries 0.0172 & \bfseries 0.0086 & \bfseries 0.0096 & \bfseries 0.0195 & \bfseries 0.0095 \\
+ & \multirow[c]{3}{*}{GAM_OT} & train & 0.0026 & 0.0117 & 0.0025 & 0.0022 & 0.0091 & 0.0022 & 0.0024 & 0.0096 & 0.0024 \\
+ &  & val & 0.0031 & 0.0107 & 0.0030 & 0.0022 & 0.0091 & 0.0022 & 0.0024 & 0.0096 & 0.0024 \\
+ &  & cv & \bfseries 0.0020 & \bfseries 0.0102 & \bfseries 0.0019 & \bfseries 0.0018 & \bfseries 0.0079 & \bfseries 0.0018 & \bfseries 0.0020 & \bfseries 0.0092 & \bfseries 0.0019 \\
+ & \multirow[c]{3}{*}{SVM_OF} & train & \bfseries 0.1573 & \bfseries 0.3954 & 0.0010 & \bfseries 0.1614 & \bfseries 0.4009 & 0.0007 & \bfseries 0.0705 & \bfseries 0.2637 & 0.0010 \\
+ &  & val & 0.2221 & 0.4698 & 0.0014 & 0.2025 & 0.4491 & 0.0009 & 0.1010 & 0.3159 & 0.0012 \\
+ &  & cv & 0.2165 & 0.4646 & \bfseries 0.0007 & 0.2060 & 0.4534 & \bfseries 0.0005 & 0.1008 & 0.3164 & \bfseries 0.0007 \\
+ & \multirow[c]{3}{*}{SVM_OT} & train & 0.0010 & 0.0156 & 0.0008 & 0.0010 & 0.0209 & 0.0005 & 0.0006 & \bfseries 0.0030 & 0.0006 \\
+ &  & val & 0.0015 & \bfseries 0.0146 & 0.0013 & 0.0010 & \bfseries 0.0209 & 0.0006 & 0.0006 & 0.0032 & 0.0007 \\
+ &  & cv & \bfseries 0.0007 & 0.0150 & \bfseries 0.0005 & \bfseries 0.0009 & 0.0211 & \bfseries 0.0004 & \bfseries 0.0005 & 0.0040 & \bfseries 0.0005 \\
+ & \multirow[c]{3}{*}{XGBoost_OF} & train & 0.0295 & \bfseries 0.1303 & 0.0129 & \bfseries 0.0819 & \bfseries 0.2764 & 0.0057 & 0.0361 & \bfseries 0.1737 & 0.0062 \\
+ &  & val & 0.0314 & 0.1355 & 0.0135 & 0.0898 & 0.2896 & 0.0062 & 0.0375 & 0.1756 & 0.0069 \\
+ &  & cv & \bfseries 0.0237 & 0.1348 & \bfseries 0.0058 & 0.0861 & 0.2884 & \bfseries 0.0030 & \bfseries 0.0348 & 0.1762 & \bfseries 0.0038 \\
+ & \multirow[c]{3}{*}{XGBoost_OT} & train & 0.0056 & 0.0296 & 0.0049 & 0.0063 & \bfseries 0.0473 & 0.0042 & 0.0043 & 0.0327 & 0.0033 \\
+ &  & val & 0.0062 & 0.0318 & 0.0054 & 0.0063 & 0.0477 & 0.0042 & 0.0043 & \bfseries 0.0325 & 0.0034 \\
+ &  & cv & \bfseries 0.0043 & \bfseries 0.0288 & \bfseries 0.0036 & \bfseries 0.0052 & 0.0476 & \bfseries 0.0031 & \bfseries 0.0035 & 0.0332 & \bfseries 0.0025 \\
+\end{tabular}
