@@ -5,7 +5,7 @@ This repository contains the full source code and results for the paper "Analyzi
 ## Important Materials (Quick Links)
 
 - hyperparameter configurations: [analyses/model_performance_analysis.ipynb](analyses/model_performance_analysis.ipynb)
-- hyperparameter search spaces: [current_research_feature_effects/mappings.py](current_research_feature_effects/mappings.py)
+- hyperparameter search spaces: [current_research_feature_effects/mappings.py](current_research_feature_effects/mappings.py#L75)
 - model performances: [analyses/model_performance_analysis.ipynb](analyses/model_performance_analysis.ipynb)
 - bias-variance-decomposition results: [analyses/bias_variance_analysis.ipynb](analyses/bias_variance_analysis.ipynb)
 - variance decomposition results: [analyses/variance_decomposition_analysis.ipynb](analyses/variance_decomposition_analysis.ipynb)
