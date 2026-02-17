@@ -11,7 +11,7 @@ import os
 from multiprocessing import Pool, cpu_count
 import numpy as np
 from sqlalchemy import create_engine
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 
 from current_research_feature_effects.data_generating.data_generation import generate_data
 from current_research_feature_effects.model_training import initialize_model
@@ -45,8 +45,11 @@ def simulate(
     os.makedirs(Path(str(params.groundtruth)) / "results", exist_ok=True)
 
     # create databases for results
-    engine_model_results = create_engine(
-        f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'model_results')}"
+    engine_model_a_results = create_engine(
+        f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'model_a_results')}"
+    )
+    engine_model_b_results = create_engine(
+        f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'model_b_results')}"
     )
     engine_effects_results = create_engine(
         f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'effects_results')}"
@@ -93,49 +96,94 @@ def simulate(
     for sim_no in range(params.config.getint("simulation_params", "n_sim")):
         logging.info(
             f"Starting simulation {sim_no+1}/{params.config.getint('simulation_params', 'n_sim')} "
-            + f"for {params.groundtruth} {params.model_name} {params.n_train}."
+            + f"for {params.groundtruth} {params.model_name} {params.sample_size}."
         )
         # generate data
-        X_train, y_train, X_val, y_val, X_test, y_test = generate_data(
+        X_, y_, X_test, y_test = generate_data(
             groundtruth=params.groundtruth,
-            n_train=params.n_train,
-            n_val=params.n_val,
+            n_train=params.sample_size,
             n_test=params.config.getint("simulation_metadata", "n_test"),
             snr=params.snr,
             seed=sim_no,
         )
 
-        cv = KFold(n_splits=k_cv, shuffle=True, random_state=42)
-        X_all, y_all = np.concatenate([X_train, X_val], axis=0), np.concatenate([y_train, y_val], axis=0)
+        ### A: estimation on training data ###
 
         # initialize model
-        model = initialize_model(
+        model_a = initialize_model(
             params.model_config,
             params.model_name,
             params.groundtruth,
-            params.n_train,
+            params.sample_size,
             params.snr,
             params.config,
         )
 
-        # try to train and evaluate model
+        # full data used as training set
+        X_train, y_train = X_, y_
+
+        # try to train and evaluate model_a
         try:
-            model.fit(X_train, y_train)
-            model_metrics = eval_model(model, X_train, y_train, X_test, y_test)
+            model_a.fit(X_train, y_train)
+            model_a_metrics = eval_model(model_a, X_train, y_train, X_test, y_test)
         except Exception as e:
-            model_metrics = empty_dict()
-            warnings.warn(f"Training of model {params.model_name} {sim_no+1} {params.n_train} failed with error:\n{e}")
+            model_a_metrics = empty_dict()
+            warnings.warn(f"Training of model A {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
 
         # save model results
-        save_model_results(model_metrics, conn=engine_model_results, params=params, sim_no=sim_no)
+        save_model_results(model_a_metrics, conn=engine_model_a_results, params=params, sim_no=sim_no)
 
-        # calculate pdps
-        pdp_train = compute_pdps(model, X_train, feature_names, grid_values, center_curves, remove_first_last)
-        pdp_val = compute_pdps(model, X_val, feature_names, grid_values, center_curves, remove_first_last)
+        # estimate pdp
+        pdp_train = compute_pdps(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
+        ale_train = compute_ales(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
+
+        ### B: estimation on validation data ###
+
+        # initialize model
+        model_b = initialize_model(
+            params.model_config,
+            params.model_name,
+            params.groundtruth,
+            params.sample_size,
+            params.snr,
+            params.config,
+        )
+
+        # split data into training and validation set
+        X_train, X_val, y_train, _ = train_test_split(X_, y_, test_size=params.val_share, random_state=sim_no)
+        
+        # try to train and evaluate model_b
+        try:
+            model_b.fit(X_train, y_train)
+            model_b_metrics = eval_model(model_b, X_train, y_train, X_val, y_test)
+        except Exception as e:
+            model_b_metrics = empty_dict()
+            warnings.warn(f"Training of model B {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
+
+        # save model results
+        save_model_results(model_b_metrics, conn=engine_model_b_results, params=params, sim_no=sim_no)
+
+        # estimate pdp
+        pdp_val = compute_pdps(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)
+        ale_val = compute_ales(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)
+
+        # C: estimation with CV
+
+        # initialize model / learner
+        model_c = initialize_model(
+            params.model_config,
+            params.model_name,
+            params.groundtruth,
+            params.sample_size,
+            params.snr,
+            params.config,
+        )
+
+        cv = KFold(n_splits=k_cv, shuffle=True, random_state=42)
         pdp_cv = compute_cv_feature_effect(
-            model,
-            X_all,
-            y_all,
+            model_c,
+            X_,
+            y_,
             cv,
             feature_names,
             [grid_values] * k_cv,
@@ -143,14 +191,10 @@ def simulate(
             center_curves,
             remove_first_last,
         )
-
-        # calculate ales
-        ale_train = compute_ales(model, X_train, feature_names, grid_values, center_curves, remove_first_last)
-        ale_val = compute_ales(model, X_val, feature_names, grid_values, center_curves, remove_first_last)
         ale_cv = compute_cv_feature_effect(
-            model,
-            X_all,
-            y_all,
+            model_c,
+            X_,
+            y_,
             cv,
             feature_names,
             [grid_values] * k_cv,
@@ -163,7 +207,7 @@ def simulate(
             pdps[split] = [pdp] if split not in pdps else pdps[split] + [pdp]
             ales[split] = [ale] if split not in ales else ales[split] + [ale]
 
-    # compute metrics
+    # compute MSE, Bias^2, Variance for pdp and ale estimates
     pdp_metrics = {
         split: compute_feature_effect_metrics(pdps_split, pdp_groundtruth) for split, pdps_split in pdps.items()
     }

@@ -118,7 +118,6 @@ def simulate(
             # calculate pdps
             pdp_train = compute_pdps(model, X_train, feature_names, grid_values, center_curves, remove_first_last)
             pdp_val = compute_pdps(model, X_val, feature_names, grid_values, center_curves, remove_first_last)
-
             pdp_cv = (
                 sum(
                     compute_pdps(
@@ -142,17 +141,17 @@ def simulate(
                 / k_cv
             )
 
-            ale_cv = compute_cv_feature_effect(
-                model,
-                X_all,
-                y_all,
-                cv,
-                feature_names,
-                [grid_values] * k_cv,
-                compute_ales,
-                center_curves,
-                remove_first_last,
-            )
+            # ale_cv = compute_cv_feature_effect(
+            #     model,
+            #     X_all,
+            #     y_all,
+            #     cv,
+            #     feature_names,
+            #     [grid_values] * k_cv,
+            #     compute_ales,
+            #     center_curves,
+            #     remove_first_last,
+            # )
 
             for split, pdp, ale in zip(
                 ["train", "val", "cv"], [pdp_train, pdp_val, pdp_cv], [ale_train, ale_val, ale_cv]

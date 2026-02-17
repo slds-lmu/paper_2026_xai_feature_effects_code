@@ -32,8 +32,8 @@ class SimulationParameter:
     groundtruth: Groundtruth
     model_name: str
     model_config: Dict
-    n_train: int
-    n_val: int
+    sample_size: int
+    val_share: float
     snr: float
     config: ConfigParser
 
@@ -56,13 +56,8 @@ def _parse_sim_params(sim_config: ConfigParser) -> Dict:
     datasets_config_path = Path(sim_config["simulation_params"]["datasets_yaml"])
 
     param_dict["n_sim"] = sim_config.getint("simulation_params", "n_sim")
-    param_dict["n_train_val"] = [
-        (int(n_train), int(n_val))
-        for n_train, n_val in zip(
-            sim_config.get("simulation_params", "n_train").split(","),
-            sim_config.get("simulation_params", "n_val").split(","),
-        )
-    ]
+    param_dict["sample_size"] = [int(e) for e in sim_config.get("simulation_params", "sample_size").split(",")]
+    param_dict["val_share"] = sim_config.getfloat("simulation_params", "val_share")
     param_dict["snr"] = sim_config.getfloat("simulation_params", "snr")
 
     with open(models_config_path, "r") as file:
@@ -110,13 +105,13 @@ def create_parameter_space(config: ConfigParser) -> List[SimulationParameter]:
             groundtruth=gt,
             model_name=model_name,
             model_config=model_config,
-            n_train=n_train,
-            n_val=n_val,
+            sample_size=sample_size,
+            val_share=sim_params["val_share"],
             snr=sim_params["snr"],
             config=config,
         )
-        for gt, (n_train, n_val), (model_name, model_config) in product(
-            sim_params["groundtruths"], sim_params["n_train_val"], sim_params["models_config"].items()
+        for gt, sample_size, (model_name, model_config) in product(
+            sim_params["groundtruths"], sim_params["sample_size"], sim_params["models_config"].items()
         )
     ]
 
