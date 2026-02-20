@@ -178,7 +178,7 @@ def save_model_results(
         {
             "model": [params.model_name],
             "simulation": [sim_no + 1],
-            "n_train": [params.n_train],
+            "sample_size": [params.sample_size],
             "snr": [params.snr],
         }
         | model_metrics
@@ -225,7 +225,7 @@ def save_fe_aggregated_results(
                 rows.append(
                     {
                         "model": params.model_name,
-                        "n_train": params.n_train,
+                        "sample_size": params.sample_size,
                         "split": split,
                         "metric": metric,
                         "feature": feature,
@@ -241,7 +241,7 @@ def save_fe_aggregated_results(
         if_exists="append",
     )
 
-    logging.info(f"Saved aggregated {type} results for {params.model_name} {params.n_train}.")
+    logging.info(f"Saved aggregated {type} results for {params.model_name} {params.sample_size}.")
 
 
 def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal["pdp", "ale", "pdp_var", "ale_var"]):
@@ -260,10 +260,10 @@ def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal
     os.makedirs(Path(str(params.groundtruth)) / "results" / params.model_name, exist_ok=True)
     dump(
         fe_metrics,
-        Path(str(params.groundtruth)) / "results" / params.model_name / f"{type}_metrics_{params.n_train}.joblib",
+        Path(str(params.groundtruth)) / "results" / params.model_name / f"{type}_metrics_{params.sample_size}.joblib",
     )
 
-    logging.info(f"Saved {type} results for {params.model_name} {params.n_train}.")
+    logging.info(f"Saved {type} results for {params.model_name} {params.sample_size}.")
 
 
 def _warning_to_logger(message, category, filename, lineno, file=None, line=None):

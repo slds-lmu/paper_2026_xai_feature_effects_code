@@ -163,7 +163,7 @@ def simulate(
         # try to train and evaluate model_b
         try:
             model_b.fit(X_train, y_train)
-            model_b_metrics = eval_model(model_b, X_train, y_train, X_val, y_test)
+            model_b_metrics = eval_model(model_b, X_train, y_train, X_test, y_test)
         except Exception as e:
             model_b_metrics = empty_dict()
             warnings.warn(f"Training of model B {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
