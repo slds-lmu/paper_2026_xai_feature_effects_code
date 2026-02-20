@@ -3,6 +3,7 @@ This module contains utility functions for the simulation study.
 """
 
 from configparser import ConfigParser
+import json
 import logging
 import warnings
 from typing import Dict, List, Literal
@@ -35,6 +36,7 @@ class SimulationParameter:
     sample_size: int
     val_share: float
     snr: float
+    do_var_decomp: bool
     config: ConfigParser
 
 
@@ -59,6 +61,8 @@ def _parse_sim_params(sim_config: ConfigParser) -> Dict:
     param_dict["sample_size"] = [int(e) for e in sim_config.get("simulation_params", "sample_size").split(",")]
     param_dict["val_share"] = sim_config.getfloat("simulation_params", "val_share")
     param_dict["snr"] = sim_config.getfloat("simulation_params", "snr")
+    var_decomp = json.loads(sim_config.get("simulation_params", "var_decomp"))
+    param_dict["var_decomp"] = list(product(*var_decomp))
 
     with open(models_config_path, "r") as file:
         models_config: Dict = yaml.safe_load(file)
@@ -108,6 +112,7 @@ def create_parameter_space(config: ConfigParser) -> List[SimulationParameter]:
             sample_size=sample_size,
             val_share=sim_params["val_share"],
             snr=sim_params["snr"],
+            do_var_decomp=(model_name, sample_size, gt.name) in sim_params["var_decomp"],
             config=config,
         )
         for gt, sample_size, (model_name, model_config) in product(
@@ -197,7 +202,7 @@ def save_fe_aggregated_results(
     res_agg: Dict[str, Dict[str, Dict]],
     conn: Engine,
     params: SimulationParameter,
-    type: Literal["pdp", "ale"],
+    type: Literal["pdp", "ale", "pdp_var", "ale_var"],
 ):
     """
     Save aggregated feature effect results to database.
@@ -239,7 +244,7 @@ def save_fe_aggregated_results(
     logging.info(f"Saved aggregated {type} results for {params.model_name} {params.n_train}.")
 
 
-def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal["pdp", "ale"]):
+def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal["pdp", "ale", "pdp_var", "ale_var"]):
     """
     Save feature effect results to joblib file.
 
