@@ -3,6 +3,7 @@ This module contains utility functions for the simulation study.
 """
 
 from configparser import ConfigParser
+from datetime import datetime
 import json
 import logging
 import warnings
@@ -296,7 +297,7 @@ def setup_logger(log_dir: Path = Path("logs")):
     log_dir.mkdir(exist_ok=True)
 
     # Create file handler
-    file_handler = logging.FileHandler(log_dir / "experiment_logs.log")
+    file_handler = logging.FileHandler(log_dir / f"experiment_logs_{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter("%(asctime)s - %(processName)s - %(levelname)s - %(message)s"))
 
