@@ -46,11 +46,8 @@ def simulate(
     os.makedirs(Path(str(params.groundtruth)) / "results", exist_ok=True)
 
     # create databases for results
-    engine_model_a_results = create_engine(
-        f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'model_a_results')}"
-    )
-    engine_model_b_results = create_engine(
-        f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'model_b_results')}"
+    engine_model_results = create_engine(
+        f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'model_results')}"
     )
     engine_effects_results = create_engine(
         f"sqlite:///{str(params.groundtruth)}{params.config.get('storage', 'effects_results')}"
@@ -139,7 +136,7 @@ def simulate(
             warnings.warn(f"Training of model A {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
 
         # save model results
-        save_model_results(model_a_metrics, conn=engine_model_a_results, params=params, sim_no=sim_no)
+        save_model_results(model_a_metrics, table="model_a_results", conn=engine_model_results, params=params, sim_no=sim_no)
 
         # estimate pdp
         pdp_train = compute_pdps(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
@@ -169,7 +166,7 @@ def simulate(
             warnings.warn(f"Training of model B {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
 
         # save model results
-        save_model_results(model_b_metrics, conn=engine_model_b_results, params=params, sim_no=sim_no)
+        save_model_results(model_b_metrics, table="model_b_results", conn=engine_model_results, params=params, sim_no=sim_no)
 
         # estimate pdp
         pdp_val = compute_pdps(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)

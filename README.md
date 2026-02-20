@@ -83,7 +83,7 @@ The experiments can be reproduced after completing the setup/installation above 
 Adapt the configs/main_study.ini with your paths, navigate to the root folder of this repository and run:
 
 ```
-poetry run python scripts/main_study.py --config configs/main_study.ini
+poetry run python scripts/main.py --config configs/main_study.ini
 ```
 
 This will automatically run the main study based on the parameters provided in the `configs/main_study.ini`.

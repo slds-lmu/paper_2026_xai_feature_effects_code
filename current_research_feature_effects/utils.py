@@ -145,6 +145,7 @@ def create_and_set_sim_dir(sim_config: ConfigParser, config_path: Path) -> None:
 
 def save_model_results(
     model_metrics: Dict[str, float],
+    table: str,
     conn: Engine,
     params: SimulationParameter,
     sim_no: int,
@@ -158,6 +159,8 @@ def save_model_results(
     ----------
     model_metrics : Dict[str, float]
         Dictionary of model metrics.
+    table: str
+        Name of the table to save results to.
     conn : Engine
         SQLAlchemy engine for results database.
     params : SimulationParameter
@@ -187,7 +190,7 @@ def save_model_results(
     for attempt in range(max_retries):
         try:
             df_model_result.to_sql(
-                "model_results",
+                table,
                 con=conn,
                 if_exists="append",
             )
