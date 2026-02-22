@@ -43,8 +43,8 @@ def format_dataframe(df: pd.DataFrame, bias_squared: bool=False) -> pd.DataFrame
     ]
     sorted_idx = [
         (n, model, split)
-        for n in sorted(df_out.index.get_level_values("n_train").unique())
-        for model in ["LinReg", "GAM_OF", "GAM_OT", "SVM_OF", "SVM_OT", "XGBoost_OF", "XGBoost_OT"]
+        for n in sorted(df_out.index.get_level_values("sample_size").unique())
+        for model in ["LinReg", "GAM_OF", "GAM_OT", "XGBoost_OF", "XGBoost_OT"]
         for split in ["train", "val", "cv"]
     ]
     df_out = df_out.reindex(index=pd.MultiIndex.from_tuples(sorted_idx), columns=sorted_cols)
@@ -173,12 +173,12 @@ def get_grouped_df(df: pd.DataFrame) -> pd.DataFrame:
         Grouped dataframe
     """
     pivoted = df.pivot_table(
-        index=["n_train", "model", "split"], columns=["feature", "metric"], values="value"
+        index=["sample_size", "model", "split"], columns=["feature", "metric"], values="value"
     ).reset_index()
 
     pivoted.columns.name = None
 
-    return pivoted.groupby(by=["n_train", "model", "split"]).mean()
+    return pivoted.groupby(by=["sample_size", "model", "split"]).mean()
 
 
 def filter_variance_metrics(df: pd.DataFrame) -> pd.DataFrame:
@@ -229,14 +229,14 @@ def flatten_variance_df(hierarchical_df: pd.DataFrame) -> pd.DataFrame:
     """
     records = []
     for idx, row in hierarchical_df.iterrows():
-        n_train, model, split = idx
+        sample_size, model, split = idx
         for col in hierarchical_df.columns:
             feature, metric = col
             value = row[col]
             record = {
                 "model": model,
                 "split": split,
-                "n_train": n_train,
+                "sample_size": sample_size,
                 "feature": feature,
                 "metric": metric,
                 "value": value,
@@ -246,6 +246,6 @@ def flatten_variance_df(hierarchical_df: pd.DataFrame) -> pd.DataFrame:
     flat_df = flat_df.reset_index(drop=True)
     split_order = ["train", "val", "cv"]
     flat_df["split"] = pd.Categorical(flat_df["split"], categories=split_order, ordered=True)
-    flat_df = flat_df.sort_values(by=["n_train", "model", "split", "feature", "metric"])
+    flat_df = flat_df.sort_values(by=["sample_size", "model", "split", "feature", "metric"])
 
     return flat_df
