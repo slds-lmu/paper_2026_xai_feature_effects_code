@@ -1,26 +1,26 @@
-\begin{tabular}{llrrrr}
+\begin{tabular}{llllll}
 \toprule
- & sample_size & \multicolumn{2}{r}{1000} & \multicolumn{2}{r}{8000} \\
+ & sample_size & \multicolumn{2}{r}{1250} & \multicolumn{2}{r}{10000} \\
  &  & r2_train & r2_test & r2_train & r2_test \\
 dataset & model &  &  &  &  \\
 \midrule
-\multirow[t]{5}{*}{FeynmanI.29.16} & GAM_OF & NaN & NaN & NaN & NaN \\
- & GAM_OT & NaN & NaN & NaN & NaN \\
- & LinReg & NaN & NaN & NaN & NaN \\
- & XGBoost_OF & NaN & NaN & NaN & NaN \\
- & XGBoost_OT & NaN & NaN & NaN & NaN \\
+\multirow[t]{5}{*}{FeynmanI.29.16} & GAM_OF & 0.9671 ± 0.0025 & 0.6570 ± 0.0678 & 0.9096 ± 0.0031 & 0.8642 ± 0.0087 \\
+ & GAM_OT & 0.9104 ± 0.0077 & 0.8572 ± 0.0060 & 0.8948 ± 0.0035 & 0.8839 ± 0.0039 \\
+ & LinReg & 0.7950 ± 0.0261 & 0.8037 ± 0.0073 & 0.8038 ± 0.0080 & 0.8042 ± 0.0082 \\
+ & XGBoost_OF & 1.0000 ± 0.0000 & 0.7133 ± 0.0155 & 1.0000 ± 0.0000 & 0.8138 ± 0.0089 \\
+ & XGBoost_OT & 0.9908 ± 0.0006 & 0.8746 ± 0.0054 & 0.9911 ± 0.0002 & 0.9288 ± 0.0034 \\
 \cline{1-6}
-\multirow[t]{5}{*}{Friedman1} & GAM_OF & NaN & NaN & NaN & NaN \\
- & GAM_OT & NaN & NaN & NaN & NaN \\
- & LinReg & NaN & NaN & NaN & NaN \\
- & XGBoost_OF & NaN & NaN & NaN & NaN \\
- & XGBoost_OT & NaN & NaN & NaN & NaN \\
+\multirow[t]{5}{*}{Friedman1} & GAM_OF & 0.9912 ± 0.0006 & 0.8639 ± 0.0064 & 0.9689 ± 0.0007 & 0.9519 ± 0.0011 \\
+ & GAM_OT & 0.9681 ± 0.0017 & 0.9534 ± 0.0012 & 0.9619 ± 0.0007 & 0.9607 ± 0.0008 \\
+ & LinReg & 0.7228 ± 0.0139 & 0.7202 ± 0.0065 & 0.7234 ± 0.0050 & 0.7209 ± 0.0054 \\
+ & XGBoost_OF & 1.0000 ± 0.0000 & 0.7182 ± 0.0187 & 1.0000 ± 0.0000 & 0.8969 ± 0.0040 \\
+ & XGBoost_OT & 0.9959 ± 0.0002 & 0.9355 ± 0.0021 & 0.9760 ± 0.0006 & 0.9564 ± 0.0010 \\
 \cline{1-6}
-\multirow[t]{5}{*}{SimpleNormalCorrelated} & GAM_OF & NaN & NaN & NaN & NaN \\
- & GAM_OT & NaN & NaN & NaN & NaN \\
- & LinReg & NaN & NaN & NaN & NaN \\
- & XGBoost_OF & NaN & NaN & NaN & NaN \\
- & XGBoost_OT & NaN & NaN & NaN & NaN \\
+\multirow[t]{5}{*}{SimpleNormalCorrelated} & GAM_OF & 0.9688 ± 0.0040 & 0.8732 ± 0.0600 & 0.9627 ± 0.0014 & 0.7675 ± 0.2173 \\
+ & GAM_OT & 0.9614 ± 0.0050 & 0.9608 ± 0.0014 & 0.9612 ± 0.0017 & 0.9616 ± 0.0015 \\
+ & LinReg & 0.2048 ± 0.0442 & 0.1810 ± 0.0155 & 0.1895 ± 0.0118 & 0.1860 ± 0.0125 \\
+ & XGBoost_OF & 1.0000 ± 0.0000 & 0.8996 ± 0.0166 & 1.0000 ± 0.0000 & 0.9186 ± 0.0096 \\
+ & XGBoost_OT & 0.9775 ± 0.0030 & 0.9395 ± 0.0062 & 0.9636 ± 0.0015 & 0.9507 ± 0.0036 \\
 \cline{1-6}
 \bottomrule
 \end{tabular}
