@@ -98,206 +98,246 @@ def simulate(
         pdp_variances = {}
         ale_variances = {}
 
-    for sim_no in range(params.config.getint("simulation_params", "n_sim")):
+    n_sim = params.config.getint("simulation_params", "n_sim")
+    failed_runs = 0
+    for sim_no in range(n_sim):
         logging.info(
-            f"Starting simulation {sim_no+1}/{params.config.getint('simulation_params', 'n_sim')} "
+            f"Starting simulation {sim_no+1}/{n_sim} "
             + f"for {params.groundtruth} {params.model_name} {params.sample_size}."
         )
-        # generate data
-        X_, y_, X_test, y_test = generate_data(
-            groundtruth=params.groundtruth,
-            n_train=params.sample_size,
-            n_test=params.config.getint("simulation_metadata", "n_test"),
-            snr=params.snr,
-            seed=sim_no,
-        )
-
-        ### A: estimation on training data ###
-
-        # initialize model
-        model_a = initialize_model(
-            params.model_config,
-            params.model_name,
-            params.groundtruth,
-            params.sample_size,
-            params.snr,
-            params.config,
-        )
-
-        # full data used as training set
-        X_train, y_train = X_, y_
-
-        # try to train and evaluate model_a
         try:
-            model_a.fit(X_train, y_train)
-            model_a_metrics = eval_model(model_a, X_train, y_train, X_test, y_test)
-        except Exception as e:
-            model_a_metrics = empty_dict()
-            warnings.warn(f"Training of model A {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
-
-        # save model results
-        save_model_results(model_a_metrics, table="model_a_results", conn=engine_model_results, params=params, sim_no=sim_no)
-
-        # estimate pdp
-        pdp_train = compute_pdps(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
-        ale_train = compute_ales(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
-
-        ### B: estimation on validation data ###
-
-        # initialize model
-        model_b = initialize_model(
-            params.model_config,
-            params.model_name,
-            params.groundtruth,
-            params.sample_size,
-            params.snr,
-            params.config,
-        )
-
-        # split data into training and validation set
-        X_train, X_val, y_train, _ = train_test_split(X_, y_, test_size=params.val_share, random_state=sim_no)
-        
-        # try to train and evaluate model_b
-        try:
-            model_b.fit(X_train, y_train)
-            model_b_metrics = eval_model(model_b, X_train, y_train, X_test, y_test)
-        except Exception as e:
-            model_b_metrics = empty_dict()
-            warnings.warn(f"Training of model B {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}")
-
-        # save model results
-        save_model_results(model_b_metrics, table="model_b_results", conn=engine_model_results, params=params, sim_no=sim_no)
-
-        # estimate pdp
-        pdp_val = compute_pdps(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)
-        ale_val = compute_ales(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)
-
-        # C: estimation with CV
-
-        # initialize model / learner
-        model_c = initialize_model(
-            params.model_config,
-            params.model_name,
-            params.groundtruth,
-            params.sample_size,
-            params.snr,
-            params.config,
-        )
-
-        cv = KFold(n_splits=k_cv, shuffle=True, random_state=42)
-        cv_splits = list(cv.split(X=X_, y=y_))
-        cv_models = []
-        cv_holdout_sets = []
-
-        for train_index, test_index in cv_splits:
-            X_train_cv, y_train_cv = X_[train_index], y_[train_index]
-            model_fold = deepcopy(model_c)
-            model_fold.fit(X_train_cv, y_train_cv)
-            cv_models.append(model_fold)
-            cv_holdout_sets.append(test_index)
-
-        pdp_cv = (
-            sum(
-                compute_pdps(
-                    model_fold,
-                    X_[test_index],
-                    feature_names,
-                    grid_values,
-                    center_curves,
-                    remove_first_last,
-                )
-                for test_index, model_fold in zip(cv_holdout_sets, cv_models)
-            )
-            / k_cv
-        )
-        ale_cv = (
-            sum(
-                compute_ales(
-                    model_fold,
-                    X_[test_index],
-                    feature_names,
-                    grid_values,
-                    center_curves,
-                    remove_first_last,
-                )
-                for test_index, model_fold in zip(cv_holdout_sets, cv_models)
-            )
-            / k_cv
-        )
-
-        for split, pdp, ale in zip(["train", "val", "cv"], [pdp_train, pdp_val, pdp_cv], [ale_train, ale_val, ale_cv]):
-            pdps[split] = [pdp] if split not in pdps else pdps[split] + [pdp]
-            ales[split] = [ale] if split not in ales else ales[split] + [ale]
-
-        if not params.do_var_decomp:
-            continue
-
-        pdps_mc = {}
-        ales_mc = {}
-        for k in range(n_mc_datasets):
-            X_mc, y_mc, _, _ = generate_data(
+            # generate data
+            X_, y_, X_test, y_test = generate_data(
                 groundtruth=params.groundtruth,
                 n_train=params.sample_size,
-                n_test=1,
+                n_test=params.config.getint("simulation_metadata", "n_test"),
                 snr=params.snr,
-                seed=dataset_base_seed + sim_no * n_mc_datasets + k,
+                seed=sim_no,
             )
-            _, X_mc_val, _, _ = train_test_split(X_mc, y_mc, test_size=params.val_share, random_state=sim_no)
 
-            pdp_train_mc = compute_pdps(model_a, X_mc, feature_names, grid_values, center_curves, remove_first_last)
-            ale_train_mc = compute_ales(model_a, X_mc, feature_names, grid_values, center_curves, remove_first_last)
-            pdp_val_mc = compute_pdps(
-                model_b, X_mc_val, feature_names, grid_values, center_curves, remove_first_last
+            ### A: estimation on training data ###
+
+            # initialize model
+            model_a = initialize_model(
+                params.model_config,
+                params.model_name,
+                params.groundtruth,
+                params.sample_size,
+                params.snr,
+                params.config,
             )
-            ale_val_mc = compute_ales(
-                model_b, X_mc_val, feature_names, grid_values, center_curves, remove_first_last
+
+            # full data used as training set
+            X_train, y_train = X_, y_
+
+            # try to train and evaluate model_a
+            try:
+                model_a.fit(X_train, y_train)
+                model_a_metrics = eval_model(model_a, X_train, y_train, X_test, y_test)
+                save_model_results(
+                    model_a_metrics, table="model_a_results", conn=engine_model_results, params=params, sim_no=sim_no
+                )
+            except Exception as e:
+                model_a_metrics = empty_dict()
+                save_model_results(
+                    model_a_metrics, table="model_a_results", conn=engine_model_results, params=params, sim_no=sim_no
+                )
+                warnings.warn(
+                    f"Training of model A {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}"
+                )
+                raise e
+
+            # estimate pdp
+            pdp_train = compute_pdps(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
+            ale_train = compute_ales(model_a, X_train, feature_names, grid_values, center_curves, remove_first_last)
+
+            ### B: estimation on validation data ###
+
+            # initialize model
+            model_b = initialize_model(
+                params.model_config,
+                params.model_name,
+                params.groundtruth,
+                params.sample_size,
+                params.snr,
+                params.config,
             )
-            pdp_cv_mc = (
+
+            # split data into training and validation set
+            X_train, X_val, y_train, _ = train_test_split(X_, y_, test_size=params.val_share, random_state=sim_no)
+
+            # try to train and evaluate model_b
+            try:
+                model_b.fit(X_train, y_train)
+                model_b_metrics = eval_model(model_b, X_train, y_train, X_test, y_test)
+                save_model_results(
+                    model_b_metrics, table="model_b_results", conn=engine_model_results, params=params, sim_no=sim_no
+                )
+            except Exception as e:
+                model_b_metrics = empty_dict()
+                save_model_results(
+                    model_b_metrics, table="model_b_results", conn=engine_model_results, params=params, sim_no=sim_no
+                )
+                warnings.warn(
+                    f"Training of model B {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}"
+                )
+                raise e
+
+            # estimate pdp
+            pdp_val = compute_pdps(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)
+            ale_val = compute_ales(model_b, X_val, feature_names, grid_values, center_curves, remove_first_last)
+
+            # C: estimation with CV
+
+            # initialize model / learner
+            model_c = initialize_model(
+                params.model_config,
+                params.model_name,
+                params.groundtruth,
+                params.sample_size,
+                params.snr,
+                params.config,
+            )
+
+            cv = KFold(n_splits=k_cv, shuffle=True, random_state=42)
+            cv_splits = list(cv.split(X=X_, y=y_))
+            cv_models = []
+            cv_holdout_sets = []
+
+            try:
+                for train_index, test_index in cv_splits:
+                    X_train_cv, y_train_cv = X_[train_index], y_[train_index]
+                    model_fold = deepcopy(model_c)
+                    model_fold.fit(X_train_cv, y_train_cv)
+                    cv_models.append(model_fold)
+                    cv_holdout_sets.append(test_index)
+            except Exception as e:
+                warnings.warn(
+                    f"Training of CV models {params.model_name} {sim_no+1} {params.sample_size} failed with error:\n{e}"
+                )
+                raise e
+
+            pdp_cv = (
                 sum(
                     compute_pdps(
                         model_fold,
-                        X_mc[test_index],
+                        X_[test_index],
                         feature_names,
                         grid_values,
                         center_curves,
                         remove_first_last,
                     )
-                    for (_, test_index), model_fold in zip(cv_splits, cv_models)
+                    for test_index, model_fold in zip(cv_holdout_sets, cv_models)
                 )
                 / k_cv
             )
-            ale_cv_mc = (
+            ale_cv = (
                 sum(
                     compute_ales(
                         model_fold,
-                        X_mc[test_index],
+                        X_[test_index],
                         feature_names,
                         grid_values,
                         center_curves,
                         remove_first_last,
                     )
-                    for (_, test_index), model_fold in zip(cv_splits, cv_models)
+                    for test_index, model_fold in zip(cv_holdout_sets, cv_models)
                 )
                 / k_cv
             )
 
             for split, pdp, ale in zip(
-                ["train", "val", "cv"], [pdp_train_mc, pdp_val_mc, pdp_cv_mc], [ale_train_mc, ale_val_mc, ale_cv_mc]
+                ["train", "val", "cv"], [pdp_train, pdp_val, pdp_cv], [ale_train, ale_val, ale_cv]
             ):
-                pdps_mc[split] = [pdp] if split not in pdps_mc else pdps_mc[split] + [pdp]
-                ales_mc[split] = [ale] if split not in ales_mc else ales_mc[split] + [ale]
+                pdps[split] = [pdp] if split not in pdps else pdps[split] + [pdp]
+                ales[split] = [ale] if split not in ales else ales[split] + [ale]
 
-        for split in ["train", "val", "cv"]:
-            pdp_variances[split] = (
-                [compute_variance(pdps_mc[split])]
-                if split not in pdp_variances
-                else pdp_variances[split] + [compute_variance(pdps_mc[split])]
+            if not params.do_var_decomp:
+                continue
+
+            pdps_mc = {}
+            ales_mc = {}
+            for k in range(n_mc_datasets):
+                X_mc, y_mc, _, _ = generate_data(
+                    groundtruth=params.groundtruth,
+                    n_train=params.sample_size,
+                    n_test=1,
+                    snr=params.snr,
+                    seed=dataset_base_seed + sim_no * n_mc_datasets + k,
+                )
+                _, X_mc_val, _, _ = train_test_split(X_mc, y_mc, test_size=params.val_share, random_state=sim_no)
+
+                pdp_train_mc = compute_pdps(model_a, X_mc, feature_names, grid_values, center_curves, remove_first_last)
+                ale_train_mc = compute_ales(model_a, X_mc, feature_names, grid_values, center_curves, remove_first_last)
+                pdp_val_mc = compute_pdps(
+                    model_b, X_mc_val, feature_names, grid_values, center_curves, remove_first_last
+                )
+                ale_val_mc = compute_ales(
+                    model_b, X_mc_val, feature_names, grid_values, center_curves, remove_first_last
+                )
+                pdp_cv_mc = (
+                    sum(
+                        compute_pdps(
+                            model_fold,
+                            X_mc[test_index],
+                            feature_names,
+                            grid_values,
+                            center_curves,
+                            remove_first_last,
+                        )
+                        for (_, test_index), model_fold in zip(cv_splits, cv_models)
+                    )
+                    / k_cv
+                )
+                ale_cv_mc = (
+                    sum(
+                        compute_ales(
+                            model_fold,
+                            X_mc[test_index],
+                            feature_names,
+                            grid_values,
+                            center_curves,
+                            remove_first_last,
+                        )
+                        for (_, test_index), model_fold in zip(cv_splits, cv_models)
+                    )
+                    / k_cv
+                )
+
+                for split, pdp, ale in zip(
+                    ["train", "val", "cv"],
+                    [pdp_train_mc, pdp_val_mc, pdp_cv_mc],
+                    [ale_train_mc, ale_val_mc, ale_cv_mc],
+                ):
+                    pdps_mc[split] = [pdp] if split not in pdps_mc else pdps_mc[split] + [pdp]
+                    ales_mc[split] = [ale] if split not in ales_mc else ales_mc[split] + [ale]
+
+            for split in ["train", "val", "cv"]:
+                pdp_variances[split] = (
+                    [compute_variance(pdps_mc[split])]
+                    if split not in pdp_variances
+                    else pdp_variances[split] + [compute_variance(pdps_mc[split])]
+                )
+                ale_variances[split] = (
+                    [compute_variance(ales_mc[split])]
+                    if split not in ale_variances
+                    else ale_variances[split] + [compute_variance(ales_mc[split])]
+                )
+        except Exception as e:
+            failed_runs += 1
+            logging.error(
+                "Simulation %s/%s failed for %s %s %s with error: %s",
+                sim_no + 1,
+                n_sim,
+                params.groundtruth,
+                params.model_name,
+                params.sample_size,
+                e,
             )
-            ale_variances[split] = (
-                [compute_variance(ales_mc[split])]
-                if split not in ale_variances
-                else ale_variances[split] + [compute_variance(ales_mc[split])]
-            )
+            continue
+
+    logging.info("Failed simulations: %s/%s", failed_runs, n_sim)
+    print(f"Failed simulations: {failed_runs}/{n_sim}")
 
     # compute MSE, Bias^2, Variance for pdp and ale estimates
     pdp_metrics_base = {
