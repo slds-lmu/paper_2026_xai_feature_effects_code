@@ -166,7 +166,7 @@ def boxplot_model_results(
     fig.suptitle("Model evaluation", fontsize=16, fontweight="bold")
     ax[0].set_title(f"{metric} on train set")
     sns.boxplot(
-        x="n_train",
+        x="sample_size",
         y=f"{metric}_train",
         hue="model",
         data=df,
@@ -178,7 +178,7 @@ def boxplot_model_results(
     if ylim is not None:
         ax[0].set_ylim(ylim)
     sns.boxplot(
-        x="n_train",
+        x="sample_size",
         y=f"{metric}_test",
         hue="model",
         data=df,
@@ -225,12 +225,12 @@ def plot_feature_effect_error_table(
             set_fontsize("standard")
 
         g = sns.FacetGrid(
-            df.loc[df["model"] == model], row="n_train", col="feature", height=3, sharey="row", aspect=0.67
+            df.loc[df["model"] == model], row="sample_size", col="feature", height=3, sharey="row", aspect=0.67
         )
         g.map_dataframe(
             sns.barplot, x="split", y="value", hue="metric", hue_order=["MSE", "Bias^2", "Variance"], palette="Set2"
         )
-        g.set_titles(col_template="${col_name}$", row_template="n_train={row_name}")
+        g.set_titles(col_template="${col_name}$", row_template="sample_size={row_name}")
         if show_title:
             g.fig.suptitle(f"Feature Effect Errors {type.upper()} {model}", y=1.02)
             legend_pos = (0.5, 1.0)
@@ -279,7 +279,7 @@ def plot_variance_table(
             set_fontsize("standard")
 
         g = sns.FacetGrid(
-            df.loc[df["model"] == model], row="n_train", col="feature", height=3, sharey="row", aspect=0.67
+            df.loc[df["model"] == model], row="sample_size", col="feature", height=3, sharey="row", aspect=0.67
         )
         g.map_dataframe(
             sns.barplot,
@@ -294,7 +294,7 @@ def plot_variance_table(
                 if bar.get_height() < 0:
                     bar.set_hatch("////")
                     bar.set_edgecolor((0, 0, 0, 0.3))
-        g.set_titles(col_template="${col_name}$", row_template="n_train={row_name}")
+        g.set_titles(col_template="${col_name}$", row_template="sample_size={row_name}")
         if show_title:
             g.fig.suptitle(f"Variance Decomposition {type.upper()} {model}", y=1.02)
             legend_pos = (0.5, 1.0)

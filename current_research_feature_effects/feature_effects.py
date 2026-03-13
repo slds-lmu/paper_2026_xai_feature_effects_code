@@ -516,7 +516,7 @@ def compute_feature_effect_metrics(estimates: List[FeatureEffect], groundtruth: 
         metrics["Variance"] = sd if "Variance" not in metrics else metrics["Variance"] + sd
 
     metrics["MSE"] /= len(estimates)
-    metrics["Variance"] /= len(estimates) - 1
+    metrics["Variance"] /= (len(estimates) - 1)
     metrics["Bias^2"] = (mean_estimate - groundtruth) ** 2
 
     return metrics

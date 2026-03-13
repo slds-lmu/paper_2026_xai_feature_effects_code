@@ -3,6 +3,8 @@ This module contains utility functions for the simulation study.
 """
 
 from configparser import ConfigParser
+from datetime import datetime
+import json
 import logging
 import warnings
 from typing import Dict, List, Literal
@@ -32,9 +34,10 @@ class SimulationParameter:
     groundtruth: Groundtruth
     model_name: str
     model_config: Dict
-    n_train: int
-    n_val: int
+    sample_size: int
+    val_share: float
     snr: float
+    do_var_decomp: bool
     config: ConfigParser
 
 
@@ -56,14 +59,11 @@ def _parse_sim_params(sim_config: ConfigParser) -> Dict:
     datasets_config_path = Path(sim_config["simulation_params"]["datasets_yaml"])
 
     param_dict["n_sim"] = sim_config.getint("simulation_params", "n_sim")
-    param_dict["n_train_val"] = [
-        (int(n_train), int(n_val))
-        for n_train, n_val in zip(
-            sim_config.get("simulation_params", "n_train").split(","),
-            sim_config.get("simulation_params", "n_val").split(","),
-        )
-    ]
+    param_dict["sample_size"] = [int(e) for e in sim_config.get("simulation_params", "sample_size").split(",")]
+    param_dict["val_share"] = sim_config.getfloat("simulation_params", "val_share")
     param_dict["snr"] = sim_config.getfloat("simulation_params", "snr")
+    var_decomp = json.loads(sim_config.get("simulation_params", "var_decomp"))
+    param_dict["var_decomp"] = list(product(*var_decomp))
 
     with open(models_config_path, "r") as file:
         models_config: Dict = yaml.safe_load(file)
@@ -110,13 +110,14 @@ def create_parameter_space(config: ConfigParser) -> List[SimulationParameter]:
             groundtruth=gt,
             model_name=model_name,
             model_config=model_config,
-            n_train=n_train,
-            n_val=n_val,
+            sample_size=sample_size,
+            val_share=sim_params["val_share"],
             snr=sim_params["snr"],
+            do_var_decomp=(model_name, sample_size, gt.name) in sim_params["var_decomp"],
             config=config,
         )
-        for gt, (n_train, n_val), (model_name, model_config) in product(
-            sim_params["groundtruths"], sim_params["n_train_val"], sim_params["models_config"].items()
+        for gt, sample_size, (model_name, model_config) in product(
+            sim_params["groundtruths"], sim_params["sample_size"], sim_params["models_config"].items()
         )
     ]
 
@@ -145,6 +146,7 @@ def create_and_set_sim_dir(sim_config: ConfigParser, config_path: Path) -> None:
 
 def save_model_results(
     model_metrics: Dict[str, float],
+    table: str,
     conn: Engine,
     params: SimulationParameter,
     sim_no: int,
@@ -158,6 +160,8 @@ def save_model_results(
     ----------
     model_metrics : Dict[str, float]
         Dictionary of model metrics.
+    table: str
+        Name of the table to save results to.
     conn : Engine
         SQLAlchemy engine for results database.
     params : SimulationParameter
@@ -178,7 +182,7 @@ def save_model_results(
         {
             "model": [params.model_name],
             "simulation": [sim_no + 1],
-            "n_train": [params.n_train],
+            "sample_size": [params.sample_size],
             "snr": [params.snr],
         }
         | model_metrics
@@ -187,7 +191,7 @@ def save_model_results(
     for attempt in range(max_retries):
         try:
             df_model_result.to_sql(
-                "model_results",
+                table,
                 con=conn,
                 if_exists="append",
             )
@@ -202,7 +206,7 @@ def save_fe_aggregated_results(
     res_agg: Dict[str, Dict[str, Dict]],
     conn: Engine,
     params: SimulationParameter,
-    type: Literal["pdp", "ale"],
+    type: Literal["pdp", "ale", "pdp_var", "ale_var"],
 ):
     """
     Save aggregated feature effect results to database.
@@ -225,7 +229,7 @@ def save_fe_aggregated_results(
                 rows.append(
                     {
                         "model": params.model_name,
-                        "n_train": params.n_train,
+                        "sample_size": params.sample_size,
                         "split": split,
                         "metric": metric,
                         "feature": feature,
@@ -241,10 +245,10 @@ def save_fe_aggregated_results(
         if_exists="append",
     )
 
-    logging.info(f"Saved aggregated {type} results for {params.model_name} {params.n_train}.")
+    logging.info(f"Saved aggregated {type} results for {params.model_name} {params.sample_size}.")
 
 
-def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal["pdp", "ale"]):
+def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal["pdp", "ale", "pdp_var", "ale_var"]):
     """
     Save feature effect results to joblib file.
 
@@ -260,10 +264,10 @@ def save_fe_results(fe_metrics: Dict, params: SimulationParameter, type: Literal
     os.makedirs(Path(str(params.groundtruth)) / "results" / params.model_name, exist_ok=True)
     dump(
         fe_metrics,
-        Path(str(params.groundtruth)) / "results" / params.model_name / f"{type}_metrics_{params.n_train}.joblib",
+        Path(str(params.groundtruth)) / "results" / params.model_name / f"{type}_metrics_{params.sample_size}.joblib",
     )
 
-    logging.info(f"Saved {type} results for {params.model_name} {params.n_train}.")
+    logging.info(f"Saved {type} results for {params.model_name} {params.sample_size}.")
 
 
 def _warning_to_logger(message, category, filename, lineno, file=None, line=None):
@@ -293,7 +297,7 @@ def setup_logger(log_dir: Path = Path("logs")):
     log_dir.mkdir(exist_ok=True)
 
     # Create file handler
-    file_handler = logging.FileHandler(log_dir / "experiment_logs.log")
+    file_handler = logging.FileHandler(log_dir / f"experiment_logs_{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter("%(asctime)s - %(processName)s - %(levelname)s - %(message)s"))
 

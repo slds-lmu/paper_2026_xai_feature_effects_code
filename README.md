@@ -1,6 +1,6 @@
 # Analyzing Error Sources in Global Feature Effect Estimation
 
-This repository contains the full source code and results for the paper "Analyzing Error Sources in Global Feature Effect Estimation" by Timo Heiß, Coco Bögel, Bernd Bischl, and Giuseppe Casalicchio, submitted to the XAI Conference 2026.
+This repository contains the full source code and results for the paper "Analyzing Error Sources in Global Feature Effect Estimation" by Timo Heiß, Coco Bögel, Bernd Bischl, and Giuseppe Casalicchio, accepted to the *4th World Conference on eXplainable Artificial Intelligence 2026*.
 
 ## Important Materials (Quick Links)
 
@@ -18,23 +18,19 @@ This repository contains the full source code and results for the paper "Analyzi
     - *estimation_error_sample_size_analysis.ipynb*: analyses corresponding to chapter §6.3 on the effect of the sample size on the estimation error
     - *groundtruth_effects.ipynb*: visualizations of the the ground truth feature effects for each dataset
     - *model_performance_analysis.ipynb*: evaluation of model performances and overview of selected model hyperparameters
-    - *ablation_study_variance_decomposition.ipynb*: analyses corresponding to chapter §6.2 in the paper on variance decomposition into model and estimation variance
+    - *variance_decomposition_analysis.ipynb*: analyses corresponding to chapter §6.2 in the paper on variance decomposition into model and estimation variance
 -  *configs*: configurations of the experiments
     - *ablation_study_mc.ini*: configuration of the experiment on the effect of sample size on estimation error
-    - *ablation_study_variance_decomposition.ini*: configuration of the experiments to estimate estimation variances (enabling variance decomposition)
     - *datasets.yaml*: dataset configurations for all experiments
-    - *main_study.ini*: configuration of the experiments on MSE bias-variance-decomposition
-    - *models_ablation_study.yaml*: model configurations for the "ablation study" on estimation variance estimation for variance decomposition
+    - *main_study.ini*: configuration of the experiments on MSE bias-variance-decomposition and variance decomposition
     - *models.yaml*: model configurations for the MSE bias-variance-decomposition experiments
-- *current_research_feature_effects*: 'library' with implementations of functions and classes used in the experiment scripts, detailed documentation is provided in the code
+- *current_research_feature_effects*: 'package' with implementations of functions and classes used in the experiment scripts, detailed documentation is provided in the code
 - *experiments*: results of the experiments
     - *ablation_study_mc_error*: results for sample size impact on estimation error
-    - *ablation_study_variance_decomposition_new*: results for estimation variances (used for variance decomposition)
-    - *main_study_parallel*: results for MSE bias-variance-decomposition
+    - *main_study_parallel*: results for MSE bias-variance-decomposition and variance decomposition
 - *scripts*: python scripts for the experiments
     - *ablation_study_mc.py*: script for experiment on the effect of sample size on estimation error
-    - *ablation_study_variance_decomposition.py*: script for experiment to estimate estimation variances (enabling variance decomposition)
-    - *main.py*: script for experiments on MSE bias-variance-decomposition
+    - *main.py*: script for experiments on MSE bias-variance-decomposition and variance decomposition
 
 ## Setup / Installation
 Before executing experiments in this project, it is recommended to follow these steps:
@@ -78,12 +74,12 @@ poetry install
 
 The experiments can be reproduced after completing the setup/installation above by running the following commands:
 
-### Run MSE Bias-Variance-Decomposition Experiment
+### Run MSE Bias-Variance-Decomposition and Variance Decomposition Experiment
 
 Adapt the configs/main_study.ini with your paths, navigate to the root folder of this repository and run:
 
 ```
-poetry run python scripts/main_study.py --config configs/main_study.ini
+poetry run python scripts/main.py --config configs/main_study.ini
 ```
 
 This will automatically run the main study based on the parameters provided in the `configs/main_study.ini`.
@@ -91,16 +87,6 @@ It will create a new subdirectory in `experiments` based on the simulation name 
 copy the config-file to this directory, and store all simulation results (model results, tuning trials, and feature effects results in database-files).
 
 Random seeds are used throughout the entire simulation to make all results reproducible. Data genereated in each simulation run are not stored, but can simply be recreated afterwards if needed by using the number of the simulation run as seed for the data generation.
-
-### Run Experiment on Estimation Variance
-
-Adapt the ablation_study_variance_decomposition.ini with your paths, navigate to the root folder of this repository and run:
-
-```
-poetry run python scripts/ablation_study_variance_decomposition.py --config configs/ablation_study_variance_decomposition.ini
-```
-
-Results can also be found in the `experiments` directory under the corresponding experiment.
 
 ### Run Experiment on Effect of Sample Size on Estimation Error
 

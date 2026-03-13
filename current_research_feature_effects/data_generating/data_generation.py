@@ -4,7 +4,7 @@ This module contains classes and functions for generating synthetic data based o
 
 from abc import abstractmethod, ABC
 from typing import Callable, Literal, List, Optional, Tuple
-import warnings
+# import warnings
 from scipy.stats import norm, uniform, loguniform
 import numpy as np
 from sklearn.base import BaseEstimator
@@ -229,16 +229,16 @@ def _transform_to_target_distribution(
     elif dist_type == "uniform":
         low, high = params
         # Transform standard normal data to uniform
-        warnings.warn(
-            f"Correlations > 0 may not be preserved by the transformation (distribution: {dist_type}).", UserWarning
-        )
+        # warnings.warn(
+        #     f"Correlations > 0 may not be preserved by the transformation (distribution: {dist_type}).", UserWarning
+        # )
         return uniform.ppf(norm.cdf(data), loc=low, scale=high - low)
     elif dist_type == "loguniform":
         low, high = params
         # Transform standard normal data to loguniform
-        warnings.warn(
-            f"Correlations > 0 may not be preserved by the transformation (distribution: {dist_type}).", UserWarning
-        )
+        # warnings.warn(
+        #     f"Correlations > 0 may not be preserved by the transformation (distribution: {dist_type}).", UserWarning
+        # )
         return loguniform.ppf(norm.cdf(data), a=low, b=high)
     else:
         raise ValueError(f"Unsupported distribution type {dist_type}")
